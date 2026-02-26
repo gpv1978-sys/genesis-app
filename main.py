@@ -16,7 +16,11 @@ st.subheader("Arquitecto de Instrucciones de Élite")
 
 with st.sidebar:
     st.header("⚙️ NÚCLEO")
-    api_key = st.text_input("Gemini API Key", type="password")
+    # Intentar leer desde los secretos, si no, pedirla manualmente
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+else:
+    api_key = st.sidebar.text_input("Gemini API Key", type="password")
     st.write("---")
     st.markdown("**Versión 2.0:**\n- Framework RCPE\n- Lógica CoT\n- Optimización Multimodelo")
 
@@ -42,4 +46,5 @@ if st.button("FORJAR ESTRATEGIA"):
             
             with col2:
                 st.info("🔥 PROMPT MAESTRO GENERADO:")
+
                 st.markdown(resultado)
