@@ -4,20 +4,20 @@ class PromptEngine:
     def __init__(self, api_key):
         # Configuración del modelo Gemini
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Cambiamos a la versión estable para evitar el error 404
+        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
     def expand_idea(self, user_input):
-        # El Framework RCPE + Chain of Thought (CoT)
+        # Framework RCPE + Chain of Thought (CoT)
         system_prompt = """
-        Actúa como un Experto en Ingeniería de Prompts con enfoque en Mantenimiento Industrial.
-        Tu misión es transformar ideas vagas en prompts maestros siguiendo el Framework RCPE:
-        - R: Rol (Asignar una identidad experta)
-        - C: Contexto (Definir el entorno industrial o de negocios)
-        - P: Pasos (Instrucciones Chain-of-Thought paso a paso)
-        - E: Ejecución (Formato de salida esperado)
-        
-        Si el usuario da un código de error, analízalo técnicamente.
+        Eres un Experto en Ingeniería de Prompts Industriales. 
+        Tu objetivo es aplicar el Framework RCPE (Rol, Contexto, Pasos, Ejecución) 
+        y razonamiento Chain-of-Thought para generar prompts maestros.
         """
         
-        response = self.model.generate_content(f"{system_prompt}\n\nEntrada del usuario: {user_input}")
-        return response.text
+        try:
+            # Forzamos la generación de contenido
+            response = self.model.generate_content(f"{system_prompt}\n\nEntrada: {user_input}")
+            return response.text
+        except Exception as e:
+            return f"Error interno del motor: {str(e)}"
