@@ -1,29 +1,31 @@
-import google.generativeai as genai
+import os
+from groq import Groq
 
 class PromptEngine:
     def __init__(self, api_key):
-        # Configuración base
-        genai.configure(api_key=api_key)
-        
-        # Usamos 'gemini-pro', que es el modelo con mayor compatibilidad 
-        # en todas las versiones de la API.
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Inicializamos el cliente de Groq
+        self.client = Groq(api_key=api_key)
+        # Usamos Llama 3 70B, un modelo de élite para razonamiento
+        self.model = "llama3-70b-8192"
 
     def expand_idea(self, user_input):
-        system_prompt = (
-            "Actúa como un experto en ingeniería de prompts. "
-            "Transforma la siguiente idea en una instrucción maestra "
-            "usando el framework RCPE (Rol, Contexto, Pasos, Ejecución)."
-        )
+        system_prompt = """
+        Actúa como un Experto en Ingeniería de Prompts Industriales.
+        Tu misión es transformar ideas en prompts maestros siguiendo el Framework RCPE:
+        - R: Rol (Asignar una identidad experta)
+        - C: Contexto (Definir el entorno industrial)
+        - P: Pasos (Instrucciones paso a paso)
+        - E: Ejecución (Formato de salida)
+        """
         
         try:
-            # Llamada simplificada
-            response = self.model.generate_content(f"{system_prompt}\n\nEntrada: {user_input}")
-            
-            if response.text:
-                return response.text
-            else:
-                return "El motor no pudo generar una respuesta clara. Revisa tu API Key."
+            chat_completion = self.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_input}
+                ],
+                model=self.model,
+            )
+            return chat_completion.choices[0].message.content
         except Exception as e:
-            # Si gemini-pro también falla, intentamos la ruta absoluta
-            return f"Error de conexión con el modelo: {str(e)}"
+            return f"Error en el motor Groq: {str(e)}"
