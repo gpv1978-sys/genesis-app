@@ -2,22 +2,28 @@ import google.generativeai as genai
 
 class PromptEngine:
     def __init__(self, api_key):
-        # Configuración del modelo Gemini
+        # Configuración base
         genai.configure(api_key=api_key)
-        # Cambiamos a la versión estable para evitar el error 404
-        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        
+        # Usamos 'gemini-pro', que es el modelo con mayor compatibilidad 
+        # en todas las versiones de la API.
+        self.model = genai.GenerativeModel('gemini-pro')
 
     def expand_idea(self, user_input):
-        # Framework RCPE + Chain of Thought (CoT)
-        system_prompt = """
-        Eres un Experto en Ingeniería de Prompts Industriales. 
-        Tu objetivo es aplicar el Framework RCPE (Rol, Contexto, Pasos, Ejecución) 
-        y razonamiento Chain-of-Thought para generar prompts maestros.
-        """
+        system_prompt = (
+            "Actúa como un experto en ingeniería de prompts. "
+            "Transforma la siguiente idea en una instrucción maestra "
+            "usando el framework RCPE (Rol, Contexto, Pasos, Ejecución)."
+        )
         
         try:
-            # Forzamos la generación de contenido
+            # Llamada simplificada
             response = self.model.generate_content(f"{system_prompt}\n\nEntrada: {user_input}")
-            return response.text
+            
+            if response.text:
+                return response.text
+            else:
+                return "El motor no pudo generar una respuesta clara. Revisa tu API Key."
         except Exception as e:
-            return f"Error interno del motor: {str(e)}"
+            # Si gemini-pro también falla, intentamos la ruta absoluta
+            return f"Error de conexión con el modelo: {str(e)}"
