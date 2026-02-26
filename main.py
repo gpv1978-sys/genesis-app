@@ -1,3 +1,9 @@
+# Configuración de diseño responsivo
+st.set_page_config(
+    page_title="PROMPT-GENESIS",
+    page_icon="🧬",
+    initial_sidebar_state="collapsed" # La barra lateral inicia cerrada en móviles
+)
 import streamlit as st
 from engine import PromptEngine
 
@@ -48,3 +54,4 @@ if st.button("FORJAR ESTRATEGIA"):
                 st.info("🔥 PROMPT MAESTRO GENERADO:")
 
                 st.markdown(resultado)
+
