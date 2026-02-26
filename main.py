@@ -1,74 +1,49 @@
 import streamlit as st
-import time
+from engine import PromptEngine
 
-# 1. CONFIGURACIÓN (LÍNEA 1)
 st.set_page_config(page_title="PROMPT GENESIS", page_icon="🧬", layout="wide")
 
-# 2. OCULTAR TODO EL CÓDIGO Y MENÚS (MODO APK)
-st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display:none;}
-    #stDecoration {display:none;}
-    </style>
-    """, unsafe_allow_html=True)
+# Inicializar el motor en la sesión de Streamlit para que no se borre la memoria
+if 'motor' not in st.session_state:
+    st.session_state['motor'] = None
 
-# 3. IMPORTACIÓN SEGURA DEL MOTOR
-try:
-    from engine import PromptEngine
-except ImportError:
-    st.error("Error: No se encontró el archivo 'engine.py'. Asegúrate de que esté en la misma carpeta que main.py")
-    st.stop()
-
-# 4. LÓGICA DE API KEY
-api_key = st.secrets.get("GEMINI_API_KEY") or st.sidebar.text_input("API Key:", type="password")
-
-# 5. INTERFAZ
 st.title("🧬 PROMPT GENESIS V2.0")
 
-col_in, col_out = st.columns([1, 1])
+with st.sidebar:
+    st.header("⚙️ Configuración")
+    api_key = st.text_input("Groq API Key:", type="password")
+    if st.button("🔄 Reiniciar Sesión"):
+        st.session_state['motor'] = None
+        st.session_state.pop('resultado', None)
+        st.rerun()
 
-with col_in:
+col1, col2 = st.columns(2)
+
+with col1:
     st.subheader("🛠️ Forja")
-    idea = st.text_area("¿Qué quieres lograr?", height=150)
-    tipo = st.selectbox("Estrategia:", ["Técnica", "Marketing", "Código"])
-    
-    if st.button("🚀 FORJAR"):
-        if not api_key:
-            st.error("Configura tu API Key")
-        elif not idea:
-            st.warning("Escribe una idea")
+    idea = st.text_area("Describe tu idea inicial:", height=150)
+    if st.button("🚀 GENERAR ESTRATEGIA"):
+        if api_key and idea:
+            with st.spinner("Creando ADN del prompt..."):
+                # Creamos el motor solo si no existe
+                st.session_state['motor'] = PromptEngine(api_key)
+                resultado = st.session_state['motor'].process_request(idea)
+                st.session_state['resultado'] = resultado
         else:
-            with st.spinner("Procesando..."):
-                try:
-                    motor = PromptEngine(api_key)
-                    resultado = motor.expand_idea(f"[{tipo}] {idea}")
-                    st.session_state['resultado'] = resultado
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Fallo en la forja: {e}")
+            st.warning("Falta API Key o Idea.")
 
-with col_out:
-    st.subheader("🔥 Resultado")
+with col2:
+    st.subheader("🔥 Resultado y Refinamiento")
     if 'resultado' in st.session_state:
-        # Mostramos el resultado de forma elegante
-        st.info(st.session_state['resultado'])
+        # Mostramos el prompt actual
+        st.markdown(st.session_state['resultado'])
         
-        # BOTÓN DE COPIADO CON RESPALDO (Failsafe)
-        try:
-            # Intento con el método moderno
-            st.copy_to_clipboard(st.session_state['resultado'])
-            st.success("✅ ¡Copiado al portapapeles!")
-        except Exception:
-            # Si falla por versión, mostramos un área de texto fácil de copiar
-            st.warning("Pulsa prolongadamente abajo para copiar:")
-            st.text_area("Copiado manual:", value=st.session_state['resultado'], height=100)
-    else:
-        st.write("Esperando forja...")
-
-# Botón de reset
-if st.button("♻️ Nueva Forja"):
-    st.session_state.clear()
-    st.rerun()
+        st.divider()
+        
+        # CAMPO DE REFINAMIENTO
+        feedback = st.text_input("¿Quieres ajustar algo? (Ej: 'Hazlo más formal', 'Añade ejemplos')")
+        if st.button("🪄 REFINAR"):
+            with st.spinner("Ajustando..."):
+                nuevo_resultado = st.session_state['motor'].process_request(feedback)
+                st.session_state['resultado'] = nuevo_resultado
+                st.rerun()
